@@ -1,0 +1,321 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+/dts-v1/;
+
+#include "ipq8074.dtsi"
+#include "ipq8074-hk-cpu.dtsi"
+#include "ipq8074-ess.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+
+/ {
+	model = "Sagemcom Fast 5866T";
+	compatible = "sagemcom,5866t", "qcom,ipq8074";
+
+	aliases {
+		led-boot = &led_power_green;
+		led-failsafe = &led_power_red;
+		led-running = &led_power_green;
+		led-upgrade = &led_power_red;
+		serial0 = &blsp1_uart5;
+		// ✅ TAMBAH untuk modem USB
+		serial1 = &blsp1_uart3; 
+		ethernet3 = &dp4;
+		ethernet4 = &dp5;
+		ethernet5 = &dp6;
+		label-mac-device = &dp4;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+		bootargs-append = " swiotlb=1 coherent_pool=2M";
+	};
+
+	vdda_phy: regulator-fixed {
+		compatible = "regulator-fixed";
+		regulator-name = "vdda-phy";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+	};
+
+	vdda_pll: regulator-fixed {
+		compatible = "regulator-fixed";
+		regulator-name = "vdda-pll";
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+		regulator-always-on;
+	};
+ 
+	// ✅ PERBAIKI: USB VBUS regulator
+	usb_vbus_reg: regulator-usb-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb_vbus";
+		gpio = <&tlmm 9 GPIO_ACTIVE_HIGH>;  // ✅ BETULKAN KE ACTIVE_HIGH
+		enable-active-high;
+		regulator-always-on;
+		regulator-boot-on;
+		startup-delay-us = <100000>; // ✅ TAMBAH delay 100ms
+	};
+
+	// ✅ TAMBAH: Modem power controller
+	modem_power {
+		compatible = "modem-power";
+		pinctrl-names = "default";
+		pinctrl-0 = <&modem_pins>;
+
+		lte-power {
+			gpios = <&tlmm 2 GPIO_ACTIVE_HIGH>;
+			output-high;
+		};
+
+		lte-reset {
+			gpios = <&tlmm 42 GPIO_ACTIVE_HIGH>;
+			output-high;
+		};
+
+		lte-power-on {
+			gpios = <&tlmm 52 GPIO_ACTIVE_HIGH>;
+			output-high;
+		};
+
+		ble-power {
+			gpios = <&tlmm 16 GPIO_ACTIVE_HIGH>;
+			output-high;
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		wps {
+			label = "wps";
+			linux,code = <KEY_WPS_BUTTON>;
+			gpios = <&tlmm 44 GPIO_ACTIVE_LOW>;
+			debounce-interval = <60>;
+		};
+
+		reset {
+			label = "reset";
+			linux,code = <KEY_RESTART>;
+			gpios = <&tlmm 50 GPIO_ACTIVE_LOW>;
+			debounce-interval = <60>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_power_green: power_green {
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 66 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
+
+		led_power_red: power_red {
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_wlan_green: wlan_green {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 19 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
+
+		led_led1_green: led1_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 43 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_led2_green: led2_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 63 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_led3_green: led3_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 27 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_led4_green: led4_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_led5_green: led5_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 20 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_mmc0: mmc0 {
+			function = "mmc";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 31 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "mmc0";
+			default-state = "off";
+		};
+	};
+};
+
+&tlmm {
+	mdio_pins: mdio-pins {
+		mdc {
+			pins = "gpio68";
+			function = "mdc";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mdio {
+			pins = "gpio69";
+			function = "mdio";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	led_pins: led-pins {
+		pins = "gpio19", "gpio20", "gpio27", "gpio29", 
+		       "gpio43", "gpio62", "gpio63", "gpio66";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-pull-down;
+	};
+
+	// ✅ PERBAIKI: Modem pins configuration
+	modem_pins: modem-pins {
+		lte_power {
+			pins = "gpio2";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		lte_reset {
+			pins = "gpio42";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		lte_power_on {
+			pins = "gpio52";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		ble_power {
+			pins = "gpio16";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		usb_vbus {
+			pins = "gpio9";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+	};
+
+	// ✅ TAMBAH: UART untuk modem
+	blsp1_uart3_pins: blsp1-uart3-pins {
+		rx {
+			pins = "gpio25";
+			function = "blsp1_uart3";
+			bias-pull-up;
+		};
+		tx {
+			pins = "gpio26"; 
+			function = "blsp1_uart3";
+			bias-disable;
+		};
+		cts {
+			pins = "gpio27";
+			function = "blsp1_uart3";
+			bias-pull-down;
+		};
+		rts {
+			pins = "gpio28";
+			function = "blsp1_uart3";
+			bias-disable;
+		};
+	};
+};
+
+&blsp1_uart5 {
+	status = "okay";
+};
+
+// ✅ TAMBAH: UART untuk modem LTE
+&blsp1_uart3 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&blsp1_uart3_pins>;
+};
+
+// ... (selebihnya sama seperti sebelumnya)
+
+&usb_0 {
+	status = "okay";
+};
+
+&usb_1 {
+	status = "okay";
+};
+
+&dwc_0 {
+	status = "okay";
+	// ✅ TAMBAH: USB configuration untuk modem
+	snps,dis_u2_susphy_quirk;
+	snps,dis_enblslpm_quirk;
+};
+
+&dwc_1 {
+	status = "okay";
+	snps,dis_u2_susphy_quirk;
+	snps,dis_enblslpm_quirk;
+};
+
+&qusb_phy_0 {
+	status = "okay";
+	vdd-supply = <&usb_vbus_reg>;
+};
+
+&qusb_phy_1 {
+	status = "okay";
+	vdd-supply = <&usb_vbus_reg>;
+};
+
+&ssphy_0 {
+	status = "okay"; 
+};
+
+&ssphy_1 {
+	status = "okay"; 
+};
+
+// ... (selebihnya sama)
