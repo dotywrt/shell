@@ -1,0 +1,515 @@
+// SPDX-License-Identifier: GPL-2.0-or-later OR MIT
+
+/dts-v1/;
+
+#include "ipq8074.dtsi"
+#include "ipq8074-hk-cpu.dtsi"
+#include "ipq8074-ess.dtsi"
+#include <dt-bindings/gpio/gpio.h>
+#include <dt-bindings/input/input.h>
+#include <dt-bindings/leds/common.h>
+
+/ {
+	model = "Sagemcom Fast 5866T";
+	compatible = "sagemcom,5866t", "qcom,ipq8074";
+
+	aliases {
+		led-boot = &led_power_green;
+		led-failsafe = &led_power_red;
+		led-running = &led_power_green;
+		led-upgrade = &led_power_red;
+		serial0 = &blsp1_uart5;
+		serial1 = &blsp1_uart3; 
+		ethernet3 = &dp4;
+		ethernet4 = &dp5;
+		ethernet5 = &dp6;
+		label-mac-device = &dp4;
+	};
+
+	chosen {
+		stdout-path = "serial0:115200n8";
+		bootargs-append = " swiotlb=1 coherent_pool=2M";
+	};
+
+	vdda_phy: regulator-fixed {
+		compatible = "regulator-fixed";
+		regulator-name = "vdda-phy";
+		regulator-min-microvolt = <1800000>;
+		regulator-max-microvolt = <1800000>;
+		regulator-always-on;
+	};
+
+	vdda_pll: regulator-fixed {
+		compatible = "regulator-fixed";
+		regulator-name = "vdda-pll";
+		regulator-min-microvolt = <1050000>;
+		regulator-max-microvolt = <1050000>;
+		regulator-always-on;
+	};
+ 
+	usb_vbus_reg: regulator-usb-vbus {
+		compatible = "regulator-fixed";
+		regulator-name = "usb_vbus";
+		gpio = <&tlmm 9 GPIO_ACTIVE_HIGH>;  
+		enable-active-high;
+		regulator-always-on;
+		regulator-boot-on;
+		startup-delay-us = <100000>; 
+	};
+
+	gpio-export {
+		compatible = "gpio-export";
+
+		lte-power {
+			gpio-export,name = "lte_power";
+			gpio-export,output = <1>;
+			gpios = <&tlmm 2 GPIO_ACTIVE_HIGH>;
+		};
+
+		lte-reset {
+			gpio-export,name = "lte_reset";
+			gpio-export,output = <1>;
+			gpios = <&tlmm 42 GPIO_ACTIVE_HIGH>;
+		};
+
+		lte-power-on {
+			gpio-export,name = "lte_power_on";
+			gpio-export,output = <1>;
+			gpios = <&tlmm 52 GPIO_ACTIVE_HIGH>;
+		};
+
+		ble-power {
+			gpio-export,name = "ble_power";
+			gpio-export,output = <1>;
+			gpios = <&tlmm 16 GPIO_ACTIVE_HIGH>;
+		};
+	};
+
+	keys {
+		compatible = "gpio-keys";
+
+		wps {
+			label = "wps";
+			linux,code = <KEY_WPS_BUTTON>;
+			gpios = <&tlmm 44 GPIO_ACTIVE_LOW>;
+			debounce-interval = <60>;
+		};
+
+		reset {
+			label = "reset";
+			linux,code = <KEY_RESTART>;
+			gpios = <&tlmm 50 GPIO_ACTIVE_LOW>;
+			debounce-interval = <60>;
+		};
+	};
+
+	leds {
+		compatible = "gpio-leds";
+
+		led_power_green: power_green {
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 66 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
+
+		led_power_red: power_red {
+			function = LED_FUNCTION_POWER;
+			color = <LED_COLOR_ID_RED>;
+			gpios = <&tlmm 62 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_wlan_green: wlan_green {
+			function = LED_FUNCTION_WLAN;
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 19 GPIO_ACTIVE_HIGH>;
+			default-state = "on";
+		};
+
+		led_led1_green: led1_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 43 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_led2_green: led2_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 63 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_led3_green: led3_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 27 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_led4_green: led4_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 29 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_led5_green: led5_green {
+			function = "status";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 20 GPIO_ACTIVE_HIGH>;
+			default-state = "off";
+		};
+
+		led_mmc0: mmc0 {
+			function = "mmc";
+			color = <LED_COLOR_ID_GREEN>;
+			gpios = <&tlmm 31 GPIO_ACTIVE_HIGH>;
+			linux,default-trigger = "mmc0";
+			default-state = "off";
+		};
+	};
+};
+
+&tlmm {
+	mdio_pins: mdio-pins {
+		mdc {
+			pins = "gpio68";
+			function = "mdc";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+
+		mdio {
+			pins = "gpio69";
+			function = "mdio";
+			drive-strength = <8>;
+			bias-pull-up;
+		};
+	};
+
+	led_pins: led-pins {
+		pins = "gpio19", "gpio20", "gpio27", "gpio29", 
+		       "gpio43", "gpio62", "gpio63", "gpio66";
+		function = "gpio";
+		drive-strength = <8>;
+		bias-pull-down;
+	};
+
+	modem_pins: modem-pins {
+		lte_power {
+			pins = "gpio2";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		lte_reset {
+			pins = "gpio42";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		lte_power_on {
+			pins = "gpio52";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		ble_power {
+			pins = "gpio16";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+
+		usb_vbus {
+			pins = "gpio9";
+			function = "gpio";
+			drive-strength = <8>;
+			bias-pull-up;
+			output-high;
+		};
+	};
+
+	blsp1_uart3_pins: blsp1-uart3-pins {
+		rx {
+			pins = "gpio25";
+			function = "blsp1_uart3";
+			bias-pull-up;
+		};
+		tx {
+			pins = "gpio26"; 
+			function = "blsp1_uart3";
+			bias-disable;
+		};
+		cts {
+			pins = "gpio27";
+			function = "blsp1_uart3";
+			bias-pull-down;
+		};
+		rts {
+			pins = "gpio28";
+			function = "blsp1_uart3";
+			bias-disable;
+		};
+	};
+};
+
+&blsp1_uart5 {
+	status = "okay";
+};
+
+&blsp1_uart3 {
+	status = "okay";
+	pinctrl-names = "default";
+	pinctrl-0 = <&blsp1_uart3_pins>;
+};
+
+&cryptobam {
+	status = "okay";
+};
+
+&crypto {
+	status = "okay";
+};
+
+&prng {
+	status = "okay";
+};
+
+&qpic_bam {
+	status = "okay";
+};
+
+&sdhc_1 {
+	/delete-property/ mmc-hs400-1_8v;
+	mmc-hs200-1_8v;
+	mmc-ddr-1_8v;
+	vqmmc-supply = <&l11>;
+	status = "okay";
+
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		partition@0 {
+			label = "sbl1";
+			reg = <0x00008800 0x00080000>;
+			read-only;
+		};
+
+		partition@1 {
+			label = "bootconfig";
+			reg = <0x00010800 0x00040000>;
+			read-only;
+		};
+
+		partition@2 {
+			label = "bootconfig1";
+			reg = <0x00018800 0x00040000>;
+			read-only;
+		};
+
+		partition@3 {
+			label = "qsee";
+			reg = <0x00020800 0x00180000>;
+		};
+
+		partition@4 {
+			label = "qsee_1";
+			reg = <0x00038800 0x00180000>;
+		};
+
+		partition@5 {
+			label = "devcfg";
+			reg = <0x00050800 0x00040000>;
+		};
+
+		partition@6 {
+			label = "devcfg_1";
+			reg = <0x00058800 0x00040000>;
+		};
+
+		partition@7 {
+			label = "rpm";
+			reg = <0x00070800 0x00040000>;
+		};
+
+		partition@8 {
+			label = "rpm_1";
+			reg = <0x00078800 0x00040000>;
+		};
+
+		partition@9 {
+			label = "appsbl";
+			reg = <0x0009a800 0x000a0000>;
+		};
+
+		partition@10 {
+			label = "art";
+			reg = <0x000ae800 0x00040000>;
+			read-only;
+		};
+
+		partition@11 {
+			label = "hlos";
+			reg = <0x000b6800 0x00600000>;
+		};
+
+		partition@12 {
+			label = "rootfs";
+			reg = <0x00116800 0x12C00000>;
+		};
+
+		partition@13 {
+			label = "wififw";
+			reg = <0x013d6800 0x00400000>;
+		};
+
+		partition@14 {
+			label = "ethphyfw";
+			reg = <0x01416800 0x00080000>;
+		};
+
+		partition@15 {
+			label = "rootfs_data";
+			reg = <0x014e2000 0x190000000>; 
+		};
+	};
+};
+
+&usb_0 {
+	status = "okay";
+};
+
+&usb_1 {
+	status = "okay";
+};
+
+&dwc_0 {
+	status = "okay";
+	snps,dis_u2_susphy_quirk;
+	snps,dis_enblslpm_quirk;
+	snps,usb2-lpm-disable;
+	dr_mode = "host";
+};
+
+&dwc_1 {
+	status = "okay";
+	snps,dis_u2_susphy_quirk;
+	snps,dis_enblslpm_quirk;
+	snps,usb2-lpm-disable;
+	dr_mode = "host";
+};
+
+&qusb_phy_0 {
+	status = "okay";
+	vdd-supply = <&usb_vbus_reg>;
+};
+
+&qusb_phy_1 {
+	status = "okay";
+	vdd-supply = <&usb_vbus_reg>;
+};
+
+&ssphy_0 {
+	status = "okay"; 
+};
+
+&ssphy_1 {
+	status = "okay"; 
+};
+
+&mdio {
+	status = "okay";
+
+	pinctrl-0 = <&mdio_pins>;
+	pinctrl-names = "default";
+	reset-gpios = <&tlmm 37 GPIO_ACTIVE_LOW>;
+
+	ethernet-phy-package@0 {
+		compatible = "qcom,qca8075-package";
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0>;
+		qcom,package-mode = "qsgmii";
+
+		qca8075_3: ethernet-phy@3 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <3>;
+		};
+
+		qca8075_4: ethernet-phy@4 {
+			compatible = "ethernet-phy-ieee802.3-c22";
+			reg = <4>;
+		};
+	};
+
+	qca8081: ethernet-phy@24 {
+		compatible = "ethernet-phy-id004d.d101";
+		reg = <24>;
+		reset-deassert-us = <10000>;
+	};
+};
+
+&switch {
+	status = "okay";
+
+	switch_lan_bmp = <(ESS_PORT4 | ESS_PORT5)>;
+	switch_wan_bmp = <ESS_PORT6>;
+	switch_mac_mode = <MAC_MODE_QSGMII>;
+
+	qcom,port_phyinfo {
+		port@1 {
+			port_id = <1>;
+			phy_address = <3>;
+		};
+		port@2 {
+			port_id = <2>;
+			phy_address = <4>;
+		};
+		port@6 {
+			port_id = <6>;
+			phy_address = <24>;
+			port_mac_sel = "QGMAC_PORT";
+		};
+	};
+};
+
+&edma {
+	status = "okay";
+};
+
+&dp4 {
+	status = "okay";
+	phy-mode = "qsgmii";
+	phy-handle = <&qca8075_3>;
+	label = "lan1";
+};
+
+&dp5 {
+	status = "okay";
+	phy-mode = "qsgmii";
+	phy-handle = <&qca8075_4>;
+	label = "wan";
+};
+
+&dp6 {
+	status = "okay";
+	phy-handle = <&qca8081>;
+	label = "lan2";
+};
+
+&wifi {
+	status = "okay";
+	qcom,ath11k-calibration-variant = "Sagemcom-5866T";
+};
